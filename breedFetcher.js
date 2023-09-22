@@ -1,31 +1,28 @@
 const request = require("request");
 
-// declare variables to store the breed command line argument and combine it with the url
-const args = process.argv.slice(2);
-const breed = args[0];
-const url = `https://api.thecatapi.com/v1/breeds/search?q=${breed}`;
-
 // request the resource at the url to print the breed description
-const requestBreed = function() {
+const fetchBreedDescription = function(breedName, callback) {
+  const url = `https://api.thecatapi.com/v1/breeds/search?q=${breedName}`;
   request(url, (requestError, response, body) => {
-    // if the request fails, print the error
+    // if the request fails, call the callback with the error
     if (requestError) {
-      console.log(requestError);
-      return;
+      callback(requestError, null);
+      
+    } else {
+      // deserialize
+      const data = JSON.parse(body);
+      
+      // if the data array is not empty, call the callback with the description
+      if (data.length > 0) {
+        const description = data[0].description;
+        callback(null, description);
+      
+      // if the data array is empty, call the callback with an error message
+      } else {
+        callback("Breed not found", null);
+      }
     }
-
-    // deserialize
-    const data = JSON.parse(body);
-    
-    // if the data array is empty, print a message
-    if (!data.length) {
-      console.log("The requested breed was not found");
-      return;
-    }
-    
-    // print the breed description
-    console.log(data[0].description);
   });
 };
 
-requestBreed();
+module.exports = { fetchBreedDescription };
